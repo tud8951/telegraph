@@ -1,5 +1,6 @@
 export const runtime = 'edge';
 import { getRequestContext } from '@cloudflare/next-on-pages';
+import { parseJsonSafe } from '@/lib/safeParseResponse';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -56,7 +57,20 @@ export async function POST(request) {
       }
     });
     // console.log(res);
-    const resdata = await res.json()
+    // 先检查上游是否返回成功状态与 JSON 内容
+    let resdata;
+    try {
+      resdata = await parseJsonSafe(res);
+    } catch (err) {
+      return Response.json({
+        status: 500,
+        message: `${err.message}`,
+        success: false
+      }, {
+        status: 500,
+        headers: corsHeaders,
+      })
+    }
 
     let correctImageUrl
 

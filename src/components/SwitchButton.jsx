@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { parseJsonSafe } from '@/lib/safeParseResponse';
 import { toast } from 'react-toastify';
 
 const updateRating  = async (initName, rating) => {
@@ -14,7 +15,13 @@ const updateRating  = async (initName, rating) => {
         "rating": rating
       }),
     });
-    const res_data = await res.json();
+    let res_data;
+    try {
+      res_data = await parseJsonSafe(res);
+    } catch (err) {
+      toast.error(err.message);
+      return;
+    }
     if (res_data.success) {
       toast.success('操作成功!');
     } else {

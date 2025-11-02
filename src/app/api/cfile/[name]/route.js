@@ -1,5 +1,6 @@
 export const runtime = 'edge';
 import { getRequestContext } from '@cloudflare/next-on-pages';
+import { parseJsonSafe } from '@/lib/safeParseResponse';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -181,7 +182,19 @@ async function getFile_path(env, file_id) {
       },
     })
 
-    let responseData = await res.json();
+    let responseData;
+    try {
+      responseData = await parseJsonSafe(res);
+    } catch (err) {
+      return Response.json({
+        status: 500,
+        message: `${err.message}`,
+        success: false
+      }, {
+        status: 500,
+        headers: corsHeaders,
+      })
+    }
 
     if (responseData.ok) {
       const file_path = responseData.result.file_path

@@ -1,5 +1,6 @@
 export const runtime = 'edge';
 import { getRequestContext } from '@cloudflare/next-on-pages';
+import { parseJsonSafe } from '@/lib/safeParseResponse';
 
 
 
@@ -182,9 +183,14 @@ async function getRating(env, url) {
 		const ratingApi = env.RATINGAPI ? `${env.RATINGAPI}?` : ModerateContentUrl;
 
 		if (ratingApi) {
-			const res = await fetch(`${ratingApi}url=${url}`);
-			const data = await res.json();
-			const rating_index = data.hasOwnProperty('rating_index') ? data.rating_index : -1;
+				const res = await fetch(`${ratingApi}url=${url}`);
+				let data;
+				try {
+					data = await parseJsonSafe(res);
+				} catch (err) {
+					return -1;
+				}
+				const rating_index = data.hasOwnProperty('rating_index') ? data.rating_index : -1;
 
 			// return data;
 			return rating_index;

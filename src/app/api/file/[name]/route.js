@@ -1,5 +1,6 @@
 export const runtime = 'edge';
 import { getRequestContext } from '@cloudflare/next-on-pages';
+import { parseJsonSafe } from '@/lib/safeParseResponse';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -151,8 +152,13 @@ async function getModerateContentRating(env, url) {
     console.log(`${ratingApi}url=https://telegra.ph${url}`);
     if (ratingApi) {
       const res = await fetch(`${ratingApi}url=https://telegra.ph${url}`);
-      const data = await res.json();
-      const rating_index = data.hasOwnProperty('rating_index') ? data.rating_index : -1;
+        let data;
+        try {
+          data = await parseJsonSafe(res);
+        } catch (err) {
+          return -1;
+        }
+        const rating_index = data.hasOwnProperty('rating_index') ? data.rating_index : -1;
 
       return rating_index;
     } else {

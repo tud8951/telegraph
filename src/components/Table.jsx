@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Switcher from '@/components/SwitchButton';
+import { parseJsonSafe } from '@/lib/safeParseResponse';
 import { toast } from "react-toastify";
 import React, { useRef } from 'react';
 import TooltipItem from '@/components/Tooltip';
@@ -63,7 +64,13 @@ export default function Table({ data: initialData = [] }) {
                     name: initName,
                 }),
             });
-            const res_data = await res.json();
+            let res_data;
+            try {
+                res_data = await parseJsonSafe(res);
+            } catch (err) {
+                toast.error(err.message);
+                return;
+            }
             if (res_data.success) {
                 toast.success('删除成功!');
                 setData(prevData => prevData.filter(item => item.url !== initName));

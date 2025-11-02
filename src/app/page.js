@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useCallback } from "react";
+import { parseJsonSafe } from '@/lib/safeParseResponse';
 import { signOut } from "next-auth/react"
 import Image from "next/image";
 import { faImages, faTrashAlt, faUpload, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
@@ -68,8 +69,12 @@ export default function Home() {
         }
 
       });
-      const data = await res.json();
-      setIP(data.ip);
+      try {
+        const data = await parseJsonSafe(res);
+        setIP(data.ip);
+      } catch (err) {
+        console.error('请求出错:', err);
+      }
 
 
 
@@ -89,9 +94,14 @@ export default function Home() {
       });
 
       if (res.ok) {
-        const data = await res.json();
-        setisAuthapi(true)
-        setLoginuser(data.role)
+        try {
+          const data = await parseJsonSafe(res);
+          setisAuthapi(true)
+          setLoginuser(data.role)
+        } catch (err) {
+          setisAuthapi(false)
+          setSelectedOption("58img")
+        }
 
       } else {
         setisAuthapi(false)
@@ -115,8 +125,12 @@ export default function Home() {
         }
 
       });
-      const data = await res.json();
-      setTotal(data.total);
+      try {
+        const data = await parseJsonSafe(res);
+        setTotal(data.total);
+      } catch (err) {
+        console.error('请求出错:', err);
+      }
 
 
 

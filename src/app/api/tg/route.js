@@ -1,5 +1,6 @@
 export const runtime = 'edge';
 import { getRequestContext } from '@cloudflare/next-on-pages';
+import { parseJsonSafe } from '@/lib/safeParseResponse';
 
 
 
@@ -42,7 +43,19 @@ export async function POST(request) {
       body: request.body,
     })
 
-    const resdata = await res.json()
+    let resdata;
+    try {
+      resdata = await parseJsonSafe(res);
+    } catch (err) {
+      return Response.json({
+        status: 500,
+        message: `${err.message}`,
+        success: false
+      }, {
+        status: 500,
+        headers: corsHeaders,
+      })
+    }
     let data = {
       "url": `${customDomain}${resdata.src}`,
       "code": 200,
@@ -155,8 +168,8 @@ async function getRating(env, url) {
     const ModerateContentUrl = apikey ? `https://api.moderatecontent.com/moderate/?key=${apikey}&` : ""
     const ratingApi = env.RATINGAPI ? `${env.RATINGAPI}?` : ModerateContentUrl;
     if (ratingApi) {
-      const res = await fetch(`${ratingApi}url=https://telegra.ph${url}`);
-      const data = await res.json();
+  const res = await fetch(`${ratingApi}url=https://telegra.ph${url}`);
+  const data = await parseJsonSafe(res);
       const rating_index = data.hasOwnProperty('rating_index') ? data.rating_index : -1;
 
       return rating_index;

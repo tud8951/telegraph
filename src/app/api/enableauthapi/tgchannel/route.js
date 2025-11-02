@@ -1,5 +1,6 @@
 export const runtime = 'edge';
 import { getRequestContext } from '@cloudflare/next-on-pages';
+import { parseJsonSafe } from '@/lib/safeParseResponse';
 
 
 
@@ -63,7 +64,19 @@ export async function POST(request) {
 		});
 
 
-		let responseData = await res_img.json();
+				let responseData;
+				try {
+					responseData = await parseJsonSafe(res_img);
+				} catch (err) {
+					return Response.json({
+						status: 500,
+						message: `${err.message}`,
+						success: false
+					}, {
+						status: 500,
+						headers: corsHeaders,
+					})
+				}
 		const fileData = await getFile(responseData);
 
 		const data = {
@@ -236,9 +249,14 @@ async function getRating(env, url) {
 		const ratingApi = env.RATINGAPI ? `${env.RATINGAPI}?` : ModerateContentUrl;
 
 		if (ratingApi) {
-			const res = await fetch(`${ratingApi}url=https://api.telegram.org/file/bot${env.TG_BOT_TOKEN}/${file_path}`);
-			const data = await res.json();
-			const rating_index = data.hasOwnProperty('rating_index') ? data.rating_index : -1;
+					const res = await fetch(`${ratingApi}url=https://api.telegram.org/file/bot${env.TG_BOT_TOKEN}/${file_path}`);
+					let data;
+					try {
+						data = await parseJsonSafe(res);
+					} catch (err) {
+						return -1;
+					}
+					const rating_index = data.hasOwnProperty('rating_index') ? data.rating_index : -1;
 
 			return rating_index;
 		} else {
